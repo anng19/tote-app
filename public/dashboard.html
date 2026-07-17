@@ -53,6 +53,39 @@
   .top-actions{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
   .refresh{ font-size:12.5px; color:var(--sage-deep); font-weight:500; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
 
+  #editPanel{ display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(62,58,53,0.3); z-index:300; }
+  #editPanel.show{ display:flex; }
+  #editPanel{ justify-content:center; align-items:center; }
+  .edit-modal{ background:var(--card); border-radius:20px; padding:28px 24px; max-width:440px; width:90%; max-height:90vh; overflow-y:auto; }
+  .edit-modal h2{ margin:0 0 20px; font-size:20px; font-weight:500; }
+  .edit-modal label{ display:block; font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:16px 0 7px; }
+  .edit-modal label:first-of-type{ margin-top:0; }
+  .edit-modal input, .edit-modal textarea{ width:100%; padding:11px 2px; border:none; border-bottom:1px solid var(--line); font-family:inherit; font-size:14px; background:transparent; color:var(--ink); }
+  .edit-modal input:focus, .edit-modal textarea:focus{ outline:none; border-color:var(--sage); }
+  .edit-modal textarea{ resize:none; min-height:50px; }
+  .edit-row2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .edit-modal-actions{ display:flex; gap:10px; margin-top:24px; }
+  .edit-modal-actions button{ flex:1; padding:12px; border-radius:30px; border:none; font-family:inherit; font-weight:500; font-size:13px; cursor:pointer; }
+  .edit-modal-actions .save{ background:var(--ink); color:#fff; }
+  .edit-modal-actions .cancel{ background:var(--line); color:var(--muted); }
+  .edit-modal-actions .delete{ background:#E8D7CE; color:#8A5A45; }
+
+  .customer-item.editable{ cursor:pointer; transition:.2s; }
+  .customer-item.editable:hover{ background:var(--bg); }
+  .item-delete-btn{ font-size:12px; color:#B0473F; cursor:pointer; text-decoration:underline; text-underline-offset:2px; margin-left:8px; }
+
+  .add-item-btn{ font-size:12px; color:var(--sage-deep); cursor:pointer; text-decoration:underline; text-underline-offset:2px; margin-top:12px; display:block; }
+  .add-item-form{ background:var(--bg); border-radius:12px; padding:14px; margin-top:12px; display:none; }
+  .add-item-form.show{ display:block; }
+  .add-item-form label{ font-size:10px; margin-top:10px; margin-bottom:5px; }
+  .add-item-form input, .add-item-form select{ width:100%; padding:8px 2px; border:none; border-bottom:1px solid var(--line); font-family:inherit; font-size:13px; background:transparent; color:var(--ink); }
+  .add-item-form input:focus, .add-item-form select:focus{ outline:none; border-color:var(--sage); }
+  .add-item-form .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .add-item-form-actions{ display:flex; gap:8px; margin-top:12px; }
+  .add-item-form-actions button{ flex:1; padding:9px; border-radius:20px; border:none; font-family:inherit; font-weight:500; font-size:11px; cursor:pointer; }
+  .add-item-form-actions .add{ background:var(--sage); color:#fff; }
+  .add-item-form-actions .cancel{ background:var(--line); color:var(--muted); }
+
   .stats{ display:flex; gap:10px; margin-bottom:20px; }
   .stat{ flex:1; background:var(--bg); border-radius:14px; padding:16px 12px; text-align:center; }
   .stat .num{ font-family:'Be Vietnam Pro'; font-size:22px; font-weight:500; }
@@ -143,14 +176,50 @@
   </div>
 </main>
 
+<div id="editPanel">
+  <div class="edit-modal">
+    <h2 id="editTitle">Edit Item</h2>
+    <label for="editName">Item name</label>
+    <input id="editName" type="text">
+    <label for="editPlatform">Platform</label>
+    <select id="editPlatform">
+      <option value="shopee">Shopee</option>
+      <option value="instagram">Instagram</option>
+    </select>
+    <label for="editLink">Link</label>
+    <input id="editLink" type="text">
+    <div class="edit-row2">
+      <div>
+        <label for="editPrice">Price</label>
+        <input id="editPrice" type="text" inputmode="numeric">
+      </div>
+      <div>
+        <label for="editQty">Quantity</label>
+        <input id="editQty" type="text" inputmode="numeric">
+      </div>
+    </div>
+    <label for="editNote">Notes</label>
+    <textarea id="editNote"></textarea>
+    <div class="edit-modal-actions">
+      <button class="save" id="editSave">Save</button>
+      <button class="delete" id="editDelete">Delete</button>
+      <button class="cancel" id="editCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 let allCarts = [];
 let activeFilter = null;
 let currentPin = '';
+let editingCart = null;
+let editingItemIndex = null;
 
 const toastEl = document.getElementById('toast');
+const editPanel = document.getElementById('editPanel');
+
 function showToast(msg){
   toastEl.innerHTML = escapeHtml(msg);
   toastEl.classList.add('show');
@@ -259,8 +328,8 @@ function renderDashboard(){
 
   customerListEl.innerHTML = visible.map(cart=>{
     const custTotal = cart.items.reduce((s,it)=> s + it.price*it.qty, 0);
-    const itemLines = cart.items.map(it => `
-      <div class="customer-item">
+    const itemLines = cart.items.map((it, idx) => `
+      <div class="customer-item editable" data-cart-key="${cart.key}" data-item-index="${idx}">
         <span>
           ${it.qty > 1 ? it.qty + '× ' : ''}${escapeHtml(it.name || '(untitled)')}
           <span class="platform-tag">· ${it.platform === 'shopee' ? 'Shopee' : 'IG'}</span>
@@ -276,11 +345,95 @@ function renderDashboard(){
           <span class="customer-total">${formatVND(custTotal)}</span>
         </div>
         ${itemLines}
+        <button class="add-item-btn" data-cart-key="${cart.key}">+ Add item</button>
+        <div class="add-item-form" data-cart-key="${cart.key}">
+          <label for="newItemName-${cart.key}">Item name</label>
+          <input id="newItemName-${cart.key}" type="text" placeholder="Item name">
+          <label for="newItemPlatform-${cart.key}">Platform</label>
+          <select id="newItemPlatform-${cart.key}">
+            <option value="shopee">Shopee</option>
+            <option value="instagram">Instagram</option>
+          </select>
+          <label for="newItemLink-${cart.key}">Link (optional)</label>
+          <input id="newItemLink-${cart.key}" type="text" placeholder="Product link">
+          <div class="form-row">
+            <div><label for="newItemPrice-${cart.key}">Price</label><input id="newItemPrice-${cart.key}" type="text" inputmode="numeric" placeholder="0"></div>
+            <div><label for="newItemQty-${cart.key}">Qty</label><input id="newItemQty-${cart.key}" type="text" inputmode="numeric" placeholder="1"></div>
+          </div>
+          <label for="newItemNote-${cart.key}">Notes (optional)</label>
+          <textarea id="newItemNote-${cart.key}" placeholder="Size, color, etc..."></textarea>
+          <div class="add-item-form-actions">
+            <button class="add" data-cart-key="${cart.key}">Add</button>
+            <button class="cancel" data-cart-key="${cart.key}">Cancel</button>
+          </div>
+        </div>
         <div class="fulfilled-btn" data-key="${cart.key}">Mark as fulfilled (clears this cart)</div>
       </div>
     `;
   }).join('');
 
+  // Edit item listeners
+  customerListEl.querySelectorAll('.customer-item.editable').forEach(el=>{
+    el.addEventListener('click', ()=>{ 
+      const cartKey = el.dataset.cartKey;
+      const itemIdx = parseInt(el.dataset.itemIndex, 10);
+      openEditModal(cartKey, itemIdx);
+    });
+  });
+
+  // Add item listeners
+  customerListEl.querySelectorAll('.add-item-btn').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const cartKey = btn.dataset.cartKey;
+      const form = customerListEl.querySelector(`.add-item-form[data-cart-key="${cartKey}"]`);
+      form.classList.toggle('show');
+    });
+  });
+
+  customerListEl.querySelectorAll('.add-item-form-actions .add').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const cartKey = btn.dataset.cartKey;
+      const form = customerListEl.querySelector(`.add-item-form[data-cart-key="${cartKey}"]`);
+      const name = document.getElementById(`newItemName-${cartKey}`).value.trim();
+      const platform = document.getElementById(`newItemPlatform-${cartKey}`).value;
+      const link = document.getElementById(`newItemLink-${cartKey}`).value.trim();
+      const price = parseInt(document.getElementById(`newItemPrice-${cartKey}`).value) || 0;
+      const qty = parseInt(document.getElementById(`newItemQty-${cartKey}`).value) || 1;
+      const note = document.getElementById(`newItemNote-${cartKey}`).value.trim();
+      
+      if(!name || price <= 0){ showToast('Fill in name and price'); return; }
+      
+      const cart = allCarts.find(c => c.key === cartKey);
+      if(!cart) return;
+      
+      cart.items.push({ name, platform, link, price, qty, note });
+      try{
+        await fetchJson('/api/cart/' + cartKey + '?pin=' + encodeURIComponent(currentPin), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: cart.name, items: cart.items })
+        });
+        form.classList.remove('show');
+        renderDashboard();
+        showToast('Item added');
+      }catch(e){
+        showToast('Could not save item');
+      }
+    });
+  });
+
+  customerListEl.querySelectorAll('.add-item-form-actions .cancel').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const cartKey = btn.dataset.cartKey;
+      const form = customerListEl.querySelector(`.add-item-form[data-cart-key="${cartKey}"]`);
+      form.classList.remove('show');
+    });
+  });
+
+  // Fulfilled listeners
   customerListEl.querySelectorAll('.fulfilled-btn').forEach(btn=>{
     btn.addEventListener('click', async ()=>{
       const key = btn.dataset.key;
@@ -304,6 +457,94 @@ function renderDashboard(){
     });
   });
 }
+
+function openEditModal(cartKey, itemIdx){
+  const cart = allCarts.find(c => c.key === cartKey);
+  if(!cart || !cart.items[itemIdx]) return;
+  
+  editingCart = cartKey;
+  editingItemIndex = itemIdx;
+  const item = cart.items[itemIdx];
+  
+  document.getElementById('editTitle').textContent = 'Edit Item';
+  document.getElementById('editName').value = item.name || '';
+  document.getElementById('editPlatform').value = item.platform || 'shopee';
+  document.getElementById('editLink').value = item.link || '';
+  document.getElementById('editPrice').value = item.price || '';
+  document.getElementById('editQty').value = item.qty || 1;
+  document.getElementById('editNote').value = item.note || '';
+  
+  editPanel.classList.add('show');
+}
+
+function closeEditModal(){
+  editPanel.classList.remove('show');
+  editingCart = null;
+  editingItemIndex = null;
+}
+
+document.getElementById('editCancel').addEventListener('click', closeEditModal);
+editPanel.addEventListener('click', (e)=>{
+  if(e.target === editPanel) closeEditModal();
+});
+
+document.getElementById('editSave').addEventListener('click', async ()=>{
+  if(!editingCart || editingItemIndex === null) return;
+  const cart = allCarts.find(c => c.key === editingCart);
+  if(!cart) return;
+  
+  cart.items[editingItemIndex] = {
+    name: document.getElementById('editName').value.trim() || '(untitled)',
+    platform: document.getElementById('editPlatform').value,
+    link: document.getElementById('editLink').value.trim(),
+    price: parseInt(document.getElementById('editPrice').value) || 0,
+    qty: parseInt(document.getElementById('editQty').value) || 1,
+    note: document.getElementById('editNote').value.trim()
+  };
+  
+  try{
+    await fetchJson('/api/cart/' + editingCart + '?pin=' + encodeURIComponent(currentPin), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: cart.name, items: cart.items })
+    });
+    closeEditModal();
+    renderDashboard();
+    showToast('Item updated');
+  }catch(e){
+    showToast('Could not save changes');
+  }
+});
+
+document.getElementById('editDelete').addEventListener('click', async ()=>{
+  if(!editingCart || editingItemIndex === null) return;
+  const cart = allCarts.find(c => c.key === editingCart);
+  if(!cart) return;
+  
+  const deleted = cart.items.splice(editingItemIndex, 1)[0];
+  
+  try{
+    await fetchJson('/api/cart/' + editingCart + '?pin=' + encodeURIComponent(currentPin), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: cart.name, items: cart.items })
+    });
+    closeEditModal();
+    renderDashboard();
+    showUndoToast('Item deleted', async ()=>{
+      cart.items.splice(editingItemIndex, 0, deleted);
+      await fetchJson('/api/cart/' + editingCart + '?pin=' + encodeURIComponent(currentPin), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: cart.name, items: cart.items })
+      });
+      await loadDashboard();
+    });
+  }catch(e){
+    cart.items.splice(editingItemIndex, 0, deleted);
+    showToast('Could not delete item');
+  }
+});
 
 document.getElementById('exportBtn').addEventListener('click', async ()=>{
   if(allCarts.length === 0){ showToast('No orders yet'); return; }
