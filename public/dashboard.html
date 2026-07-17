@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tote — Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap');
+
+  :root{
+    --bg:#F7F4EF; --card:#FFFFFF; --line:#E8E2D8; --ink:#3E3A35; --muted:#6E675C;
+    --sage:#9CAB92; --sage-dfeep:#7C8E72; --blush:#E3C9BE;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Be Vietnam Pro', sans-serif; font-weight:400;
+    min-height:100vh; padding-bottom:70px; -webkit-font-smoothing:antialiased;
+  }
+  header{ padding:44px 24px 26px; text-align:center; }
+  .eyebrow{
+    font-size:11px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--sage-deep); font-weight:500; margin-bottom:14px;
+  }
+  h1{
+    font-family:'Be Vietnam Pro', sans-serif; font-weight:400; font-style:italic;
+    font-size:clamp(28px,7vw,38px); margin:0; color:var(--ink);
+  }
+  .sub{ margin:12px auto 0; font-size:14px; color:var(--muted); max-width:320px; line-height:1.6; }
+  .divider{ width:36px; height:1px; background:var(--sage); margin:22px auto 0; }
+
+  main{ max-width:520px; margin:0 auto; padding:8px 22px 0; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:20px; padding:24px; margin-bottom:22px; }
+
+  .pin-row{ display:flex; gap:10px; align-items:flex-end; }
+  .pin-row > div{ flex:1; }
+  label{
+    display:block; font-size:11px; font-weight:500; text-transform:uppercase;
+    letter-spacing:.12em; color:var(--muted); margin-bottom:7px;
+  }
+  input{
+    width:100%; padding:11px 2px; border:none; border-bottom:1px solid var(--line);
+    font-family:inherit; font-size:15px; background:transparent; color:var(--ink);
+  }
+  input:focus{ outline:none; border-color:var(--sage); }
+  .pin-row button{
+    padding:11px 18px; border-radius:30px; border:none; background:var(--ink);
+    color:#fff; font-family:inherit; font-weight:500; font-size:13px; cursor:pointer;
+  }
+  .pin-hint{ font-size:11.5px; color:var(--muted); margin-top:10px; line-height:1.5; }
+
+  #dashboard{ display:none; }
+  .top-actions{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .refresh{ font-size:12.5px; color:var(--sage-deep); font-weight:500; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+
+  .stats{ display:flex; gap:10px; margin-bottom:20px; }
+  .stat{ flex:1; background:var(--bg); border-radius:14px; padding:16px 12px; text-align:center; }
+  .stat .num{ font-family:'Be Vietnam Pro'; font-size:22px; font-weight:500; }
+  .stat .lbl{ font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-top:3px; }
+
+  .customer-menu{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:14px; margin-bottom:18px;
+    border-bottom:1px solid var(--line); scrollbar-width:none;
+  }
+  .customer-menu::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex-shrink:0; padding:8px 16px; border-radius:20px; border:1px solid var(--line);
+    background:var(--bg); font-size:12.5px; font-weight:500; color:var(--muted);
+    cursor:pointer; white-space:nowrap; transition:.15s;
+  }
+  .chip.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  .customer-block{ border-top:1px solid var(--line); padding:18px 0; }
+  .customer-block:first-child{ border-top:none; padding-top:0; }
+  .customer-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .customer-name{ font-weight:600; font-size:16px; }
+  .customer-total{ font-weight:500; font-size:14px; color:var(--sage-deep); }
+  .customer-item{
+    font-size:13px; color:var(--muted); padding:5px 0; display:flex;
+    justify-content:space-between; gap:10px; border-top:1px dashed var(--line);
+  }
+  .customer-item:first-of-type{ border-top:none; }
+  .customer-item span:first-child{ flex:1; }
+  .platform-tag{ opacity:.6; }
+  .item-link{ font-size:11px; color:#A69E90; word-break:break-word; margin-top:1px; }
+  .fulfilled-btn{
+    margin-top:10px; font-size:11.5px; color:var(--muted); cursor:pointer;
+    text-decoration:underline; text-underline-offset:2px;
+  }
+  .empty{ text-align:center; color:var(--muted); font-size:14px; padding:30px 0; font-style:italic; }
+
+  .actions{ display:flex; gap:10px; margin-top:8px; }
+  .actions button{
+    flex:1; padding:13px; border-radius:30px; font-family:inherit; font-weight:500;
+    font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+    border:1px solid var(--ink); background:var(--ink); color:#fff; transition:.2s;
+  }
+  .actions button:hover{ background:#2A2723; }
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:11px 22px; border-radius:30px;
+    font-size:13px; font-weight:400; opacity:0; transition:.3s; pointer-events:none;
+    letter-spacing:.02em; max-width:86%; text-align:center; z-index:200;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast-undo{ margin-left:10px; text-decoration:underline; text-underline-offset:2px; cursor:pointer; font-weight:600; color:#F2E4D8; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Owner only</div>
+  <h1>tote — dashboard</h1>
+  <p class="sub">Reads every customer's cart from your server.</p>
+  <div class="divider"></div>
+</header>
+
+<main>
+  <div class="card" id="pinCard">
+    <label for="pin">Enter your PIN</label>
+    <div class="pin-row">
+      <div><input id="pin" type="password" inputmode="numeric" placeholder="••••"></div>
+      <button type="button" id="unlockBtn">Unlock</button>
+    </div>
+    <div class="pin-hint">.</div>
+  </div>
+
+  <div id="dashboard">
+    <div class="card">
+      <div class="top-actions"><span class="refresh" id="refreshBtn">↻ Refresh</span></div>
+      <div class="stats">
+        <div class="stat"><div class="num" id="statCustomers">0</div><div class="lbl">Customers</div></div>
+        <div class="stat"><div class="num" id="statItems">0</div><div class="lbl">Items</div></div>
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Total</div></div>
+      </div>
+      <div class="customer-menu" id="customerMenu"></div>
+      <div id="customerList"></div>
+      <div class="actions">
+        <button id="exportBtn">Export all orders</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let allCarts = [];
+let activeFilter = null;
+let currentPin = '';
+
+const toastEl = document.getElementById('toast');
+function showToast(msg){
+  toastEl.innerHTML = escapeHtml(msg);
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._hideTimer);
+  toastEl._hideTimer = setTimeout(()=> toastEl.classList.remove('show'), 2400);
+}
+function showUndoToast(msg, undoFn){
+  toastEl.innerHTML = escapeHtml(msg) + ' <span class="toast-undo" id="toastUndo">Undo</span>';
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._hideTimer);
+  document.getElementById('toastUndo').addEventListener('click', ()=>{
+    toastEl.classList.remove('show');
+    undoFn();
+  });
+  toastEl._hideTimer = setTimeout(()=> toastEl.classList.remove('show'), 6000);
+}
+function formatVND(n){ return n.toLocaleString('en-US') + ' VND'; }
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+async function fetchJson(url, options, attempts = 3){
+  let lastErr;
+  for(let i = 0; i < attempts; i++){
+    try{
+      const res = await fetch(url, options);
+      if(res.status === 401) throw new Error('unauthorized');
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    }catch(e){
+      lastErr = e;
+      if(e.message === 'unauthorized') break;
+    }
+    if(i < attempts - 1) await new Promise(r => setTimeout(r, 350 * (i + 1)));
+  }
+  throw lastErr;
+}
+
+document.getElementById('unlockBtn').addEventListener('click', unlock);
+document.getElementById('pin').addEventListener('keydown', (e)=>{ if(e.key === 'Enter') unlock(); });
+
+async function unlock(){
+  const val = document.getElementById('pin').value.trim();
+  if(!val){ showToast('Enter a PIN'); return; }
+  currentPin = val;
+  try{
+    await fetchJson('/api/carts?pin=' + encodeURIComponent(currentPin));
+  }catch(e){
+    showToast('Wrong PIN');
+    return;
+  }
+  document.getElementById('pinCard').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  loadDashboard();
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
+
+async function loadDashboard(){
+  const customerListEl = document.getElementById('customerList');
+  customerListEl.innerHTML = '<div class="empty">Loading...</div>';
+  try{
+    const list = await fetchJson('/api/carts?pin=' + encodeURIComponent(currentPin));
+    allCarts = list.map(c => ({ key: c.slug, name: c.name, items: c.items }));
+  }catch(e){
+    customerListEl.innerHTML = '<div class="empty">Could not load data. Tap Refresh to try again.</div>';
+    return;
+  }
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const customerListEl = document.getElementById('customerList');
+  const menuEl = document.getElementById('customerMenu');
+
+  if(allCarts.length === 0){
+    customerListEl.innerHTML = '<div class="empty">No orders yet</div>';
+    menuEl.innerHTML = '';
+    document.getElementById('statCustomers').textContent = '0';
+    document.getElementById('statItems').textContent = '0';
+    document.getElementById('statTotal').textContent = '0';
+    return;
+  }
+
+  let grandTotal = 0, totalItemCount = 0;
+  allCarts.forEach(cart=>{
+    grandTotal += cart.items.reduce((s,it)=> s + it.price*it.qty, 0);
+    totalItemCount += cart.items.length;
+  });
+  document.getElementById('statCustomers').textContent = allCarts.length;
+  document.getElementById('statItems').textContent = totalItemCount;
+  document.getElementById('statTotal').textContent = formatVND(grandTotal);
+
+  menuEl.innerHTML = `<div class="chip ${activeFilter === null ? 'active' : ''}" data-key="">All</div>` +
+    allCarts.map(c => `<div class="chip ${activeFilter === c.key ? 'active' : ''}" data-key="${c.key}">${escapeHtml(c.name)}</div>`).join('');
+  menuEl.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      activeFilter = chip.dataset.key || null;
+      renderDashboard();
+    });
+  });
+
+  const visible = activeFilter ? allCarts.filter(c => c.key === activeFilter) : allCarts;
+
+  customerListEl.innerHTML = visible.map(cart=>{
+    const custTotal = cart.items.reduce((s,it)=> s + it.price*it.qty, 0);
+    const itemLines = cart.items.map(it => `
+      <div class="customer-item">
+        <span>
+          ${it.qty > 1 ? it.qty + '× ' : ''}${escapeHtml(it.name || '(untitled)')}
+          <span class="platform-tag">· ${it.platform === 'shopee' ? 'Shopee' : 'IG'}</span>
+          ${it.link ? `<div class="item-link">${escapeHtml(it.link)}</div>` : ''}
+        </span>
+        <span>${formatVND(it.price)}</span>
+      </div>
+    `).join('');
+    return `
+      <div class="customer-block">
+        <div class="customer-head">
+          <span class="customer-name">${escapeHtml(cart.name)}</span>
+          <span class="customer-total">${formatVND(custTotal)}</span>
+        </div>
+        ${itemLines}
+        <div class="fulfilled-btn" data-key="${cart.key}">Mark as fulfilled (clears this cart)</div>
+      </div>
+    `;
+  }).join('');
+
+  customerListEl.querySelectorAll('.fulfilled-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const key = btn.dataset.key;
+      const cart = allCarts.find(c => c.key === key);
+      if(!cart) return;
+      try{
+        const result = await fetchJson('/api/cart/' + key + '?pin=' + encodeURIComponent(currentPin), { method: 'DELETE' });
+        allCarts = allCarts.filter(c => c.key !== key);
+        renderDashboard();
+        showUndoToast(cart.name + '\u2019s order marked fulfilled', async ()=>{
+          await fetchJson('/api/cart-restore/' + key + '?pin=' + encodeURIComponent(currentPin), {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: cart.name, items: cart.items })
+          });
+          await loadDashboard();
+        });
+      }catch(e){
+        showToast('Could not clear that cart, try again');
+      }
+    });
+  });
+}
+
+document.getElementById('exportBtn').addEventListener('click', async ()=>{
+  if(allCarts.length === 0){ showToast('No orders yet'); return; }
+  let text = 'ALL ORDERS\n\n';
+  let grandTotal = 0;
+  allCarts.forEach(cart=>{
+    const custTotal = cart.items.reduce((s,it)=> s + it.price*it.qty, 0);
+    grandTotal += custTotal;
+    text += `— ${cart.name} (${formatVND(custTotal)}) —\n`;
+    cart.items.forEach(it=>{
+      text += `  ${it.qty > 1 ? it.qty + '× ' : ''}${it.name || '(untitled)'} [${it.platform}] — ${formatVND(it.price)}\n`;
+      if(it.link) text += `  Link: ${it.link}\n`;
+      if(it.note) text += `  Note: ${it.note}\n`;
+    });
+    text += '\n';
+  });
+  text += `GRAND TOTAL: ${formatVND(grandTotal)}`;
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('All orders copied');
+  }catch(e){
+    showToast('Could not copy, try again');
+  }
+});
+</script>
+</body>
+</html>

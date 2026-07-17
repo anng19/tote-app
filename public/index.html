@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tote</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&display=swap');
+
+  :root{
+    --bg:#F7F4EF;
+    --card:#FFFFFF;
+    --line:#E8E2D8;
+    --ink:#3E3A35;
+    --muted:#6E675C;
+    --sage:#9CAB92;
+    --sage-deep:#7C8E72;
+    --blush:#E3C9BE;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Be Vietnam Pro', sans-serif; font-weight:400;
+    min-height:100vh; padding-bottom:70px; -webkit-font-smoothing:antialiased;
+  }
+  header{ padding:48px 24px 32px; text-align:center; }
+  .eyebrow{
+    font-size:11px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--sage-deep); font-weight:500; margin-bottom:14px;
+  }
+  h1{
+    font-family:'Be Vietnam Pro', sans-serif; font-weight:400; font-style:italic;
+    font-size:clamp(32px,8vw,44px); margin:0; color:var(--ink); letter-spacing:.01em;
+  }
+  .sub{ margin:14px auto 0; font-size:14.5px; color:var(--muted); max-width:340px; line-height:1.6; }
+  .divider{ width:36px; height:1px; background:var(--sage); margin:24px auto 0; }
+
+  main{ max-width:480px; margin:0 auto; padding:8px 22px 0; }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:28px 24px; margin-bottom:22px;
+  }
+  .locked{ opacity:.45; pointer-events:none; }
+
+  .platform-toggle{
+    display:flex; gap:8px; margin-bottom:22px; background:var(--bg); padding:4px; border-radius:12px;
+  }
+  .platform-toggle button{
+    flex:1; padding:10px; border-radius:9px; border:none; background:transparent;
+    font-family:inherit; font-weight:500; font-size:13px; letter-spacing:.03em;
+    color:var(--muted); cursor:pointer; transition:.2s;
+  }
+  .platform-toggle button.active{ background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(62,58,53,0.08); }
+
+  label{
+    display:block; font-size:11px; font-weight:500; text-transform:uppercase;
+    letter-spacing:.12em; color:var(--muted); margin:18px 0 7px;
+  }
+  label:first-of-type{ margin-top:0; }
+  input, textarea{
+    width:100%; padding:11px 2px; border:none; border-bottom:1px solid var(--line);
+    border-radius:0; font-family:inherit; font-size:15px; background:transparent;
+    color:var(--ink); font-weight:400; transition:.2s;
+  }
+  input::placeholder, textarea::placeholder{ color:#A69E90; font-weight:400; }
+  input:focus, textarea:focus{ outline:none; border-color:var(--sage); }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  textarea{ resize:none; min-height:36px; }
+
+  .name-card{ padding:20px 24px; }
+  .name-card.done{ background:var(--bg); }
+  .name-row{ display:flex; align-items:flex-end; gap:12px; }
+  .name-row > div{ flex:1; }
+  .name-row button{
+    padding:11px 18px; border-radius:30px; border:none; background:var(--ink);
+    color:#fff; font-family:inherit; font-weight:500; font-size:13px; cursor:pointer;
+  }
+
+  .link-actions{ display:flex; gap:8px; margin-top:10px; }
+  .link-actions button{
+    flex:1; padding:9px; border-radius:9px; border:1px solid var(--line);
+    background:var(--bg); color:var(--ink); font-family:inherit; font-weight:500;
+    font-size:12px; cursor:pointer; transition:.2s;
+  }
+  .link-actions button:hover{ border-color:var(--sage); }
+  .ig-fields{ display:none; }
+  .ig-fields.show{ display:block; }
+
+  .edit-banner{
+    display:none; background:#FBF0E4; border:1px solid var(--blush); border-radius:12px;
+    padding:10px 14px; font-size:12.5px; color:#8A5A45; margin-bottom:6px;
+    justify-content:space-between; align-items:center; gap:10px;
+  }
+  .edit-banner.show{ display:flex; }
+  .edit-banner button{
+    background:none; border:none; color:#8A5A45; font-weight:600; font-size:12px;
+    text-decoration:underline; cursor:pointer;
+  }
+
+  .add-btn{
+    margin-top:26px; width:100%; padding:14px; border:none; border-radius:30px;
+    background:var(--sage); color:#fff; font-family:inherit; font-weight:500; font-size:13.5px;
+    letter-spacing:.08em; text-transform:uppercase; cursor:pointer; transition:.2s;
+  }
+  .add-btn:hover{ background:var(--sage-deep); }
+  .add-btn:active{ transform:scale(0.98); }
+
+  .basket-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .basket-head h2{
+    font-family:'Be Vietnam Pro', sans-serif; font-weight:400; font-style:italic;
+    font-size:20px; margin:0; color:var(--ink);
+  }
+  .count{ font-size:12px; color:var(--muted); letter-spacing:.05em; }
+
+  .item{ border-top:1px solid var(--line); padding:16px 0; display:flex; gap:12px; align-items:flex-start; }
+  .badge{
+    font-size:9.5px; font-weight:500; text-transform:uppercase; letter-spacing:.08em;
+    padding:4px 9px; border-radius:20px; white-space:nowrap; margin-top:2px;
+  }
+  .badge.shopee{ background:var(--blush); color:#8A5A45; }
+  .badge.instagram{ background:#E4E9DF; color:var(--sage-deep); }
+  .item-body{ flex:1; min-width:0; }
+  .item-name{ font-weight:500; font-size:14.5px; }
+  .item-meta{ font-size:12px; color:var(--muted); margin-top:3px; word-break:break-word; }
+  .item-note{ font-size:12px; color:#9C6A3D; margin-top:3px; font-style:italic; }
+  .item-row-actions{ display:flex; gap:12px; margin-top:6px; }
+  .item-row-actions span{
+    font-size:11.5px; color:var(--sage-deep); font-weight:500; cursor:pointer;
+    text-decoration:underline; text-underline-offset:2px;
+  }
+  .item-price{ font-weight:500; font-size:13.5px; white-space:nowrap; cursor:pointer; border-bottom:1px dashed var(--line); }
+  .item-price input{ width:80px; padding:2px; text-align:right; font-size:13.5px; border-bottom:1px solid var(--sage); }
+  .item-side{ display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+  .remove{
+    background:none; border:none; color:#B3AA9C; font-size:17px; line-height:1;
+    cursor:pointer; padding:2px 4px; font-weight:400;
+  }
+  .remove:hover{ color:#9C6A3D; }
+  .empty{ text-align:center; color:var(--muted); font-size:13.5px; padding:26px 0; font-style:italic; }
+  .total-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    border-top:1px solid var(--ink); margin-top:4px; padding-top:16px;
+  }
+  .total-row .label{ font-weight:400; font-size:12px; margin:0; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); }
+  .total-row .value{ font-family:'Be Vietnam Pro', sans-serif; font-weight:400; font-size:24px; color:var(--ink); }
+  .sync-status{ font-size:11px; color:var(--muted); margin-top:10px; text-align:right; min-height:14px; }
+  .sync-status.error{ color:#B0473F; }
+  .sync-status a{ color:inherit; text-decoration:underline; text-underline-offset:2px; cursor:pointer; margin-left:6px; }
+
+  .actions{ display:flex; gap:10px; margin-top:20px; }
+  .actions button{
+    flex:1; padding:13px; border-radius:30px; font-family:inherit; font-weight:500;
+    font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer;
+    border:1px solid var(--ink); transition:.2s;
+  }
+  .copy-btn{ background:var(--ink); color:#fff; }
+  .copy-btn:hover{ background:#2A2723; }
+  .clear-btn{ background:transparent; color:var(--muted); border-color:var(--line); }
+  .clear-btn:hover{ border-color:var(--muted); }
+
+  .owner-note{ text-align:center; margin:6px 0 30px; font-size:11.5px; color:var(--muted); line-height:1.6; }
+  .owner-note a{ color:var(--sage-deep); }
+
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:#fff; padding:11px 22px; border-radius:30px;
+    font-size:13px; font-weight:400; opacity:0; transition:.3s; pointer-events:none;
+    letter-spacing:.02em; max-width:86%; text-align:center; z-index:200;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast-undo{
+    margin-left:10px; text-decoration:underline; text-underline-offset:2px;
+    cursor:pointer; font-weight:600; color:#F2E4D8;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Shopee · Instagram · Vietnam</div>
+  <h1>tote</h1>
+  <p class="sub">Paste a link, add items, copy your list.</p>
+  <div class="divider"></div>
+</header>
+
+<main>
+
+  <div class="card name-card" id="nameCard">
+    <label for="custName">Your name</label>
+    <div class="name-row">
+      <div><input id="custName" type="text" placeholder="So we can save your own cart"></div>
+      <button type="button" id="setNameBtn">Start</button>
+    </div>
+  </div>
+
+  <div id="orderArea" class="locked">
+    <div class="card">
+      <div class="edit-banner" id="editBanner">
+        <span>Editing an item in your cart</span>
+        <button type="button" id="cancelEdit">Cancel</button>
+      </div>
+
+      <div class="platform-toggle">
+        <button type="button" data-p="shopee" class="active">Shopee</button>
+        <button type="button" data-p="instagram">Instagram</button>
+      </div>
+
+      <label for="link">Product link</label>
+      <input id="link" type="text" placeholder="Paste the link here">
+
+      <div id="linkActionsShopee" class="link-actions">
+        <button type="button" id="openShopee">Check price on Shopee</button>
+      </div>
+
+      <div id="igFields" class="ig-fields">
+        <label for="igUser">Shop username</label>
+        <input id="igUser" type="text" placeholder="shop_name">
+        <div class="link-actions">
+          <button type="button" id="msgShop">Message shop for price</button>
+        </div>
+      </div>
+
+      <label for="name">Item name</label>
+      <input id="name" type="text" placeholder="Oversized tee, beige">
+
+      <div class="row2">
+        <div>
+          <label for="price">Price</label>
+          <input id="price" type="text" inputmode="numeric" placeholder="150000">
+        </div>
+        <div>
+          <label for="qty">Quantity</label>
+          <input id="qty" type="text" inputmode="numeric" placeholder="1">
+        </div>
+      </div>
+
+      <label for="note">Notes</label>
+      <textarea id="note" placeholder="Size, color..."></textarea>
+
+      <button class="add-btn" id="addBtn">Add to cart</button>
+    </div>
+
+    <div class="card">
+      <div class="basket-head">
+        <h2 id="cartTitle">your cart</h2>
+        <span class="count" id="count">0 items</span>
+      </div>
+      <div id="list"></div>
+      <div class="total-row">
+        <p class="label">Total</p>
+        <span class="value" id="total">0</span>
+      </div>
+      <div class="sync-status" id="syncStatus"></div>
+      <div class="actions">
+        <button class="copy-btn" id="copyBtn">Copy list</button>
+        <button class="clear-btn" id="clearBtn">Clear cart</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="owner-note">Shop owner? Open <a href="/dashboard.html">the dashboard</a> to see every cart.</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let items = [];
+let platform = 'shopee';
+let customerName = '';
+let customerSlug = '';
+let editIndex = null;
+
+const listEl = document.getElementById('list');
+const countEl = document.getElementById('count');
+const totalEl = document.getElementById('total');
+const toastEl = document.getElementById('toast');
+const linkEl = document.getElementById('link');
+const igFields = document.getElementById('igFields');
+const linkActionsShopee = document.getElementById('linkActionsShopee');
+const igUserEl = document.getElementById('igUser');
+const orderArea = document.getElementById('orderArea');
+const nameCard = document.getElementById('nameCard');
+const custNameEl = document.getElementById('custName');
+const editBanner = document.getElementById('editBanner');
+const addBtn = document.getElementById('addBtn');
+const syncStatusEl = document.getElementById('syncStatus');
+
+function showToast(msg){
+  toastEl.innerHTML = escapeHtml(msg);
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._hideTimer);
+  toastEl._hideTimer = setTimeout(()=> toastEl.classList.remove('show'), 2400);
+}
+function showUndoToast(msg, undoFn){
+  toastEl.innerHTML = escapeHtml(msg) + ' <span class="toast-undo" id="toastUndo">Undo</span>';
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._hideTimer);
+  document.getElementById('toastUndo').addEventListener('click', ()=>{
+    toastEl.classList.remove('show');
+    undoFn();
+  });
+  toastEl._hideTimer = setTimeout(()=> toastEl.classList.remove('show'), 5000);
+}
+
+function formatVND(n){ return n.toLocaleString('en-US') + ' VND'; }
+
+function slugify(str){
+  return str
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'') || 'guest';
+}
+
+function setPlatform(p){
+  platform = p;
+  document.querySelectorAll('.platform-toggle button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.p === p);
+  });
+  igFields.classList.toggle('show', p === 'instagram');
+  linkActionsShopee.style.display = p === 'shopee' ? 'flex' : 'none';
+}
+document.querySelectorAll('.platform-toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=> setPlatform(btn.dataset.p));
+});
+
+function extractIgUsername(url){
+  try{
+    const u = new URL(url);
+    if(!u.hostname.includes('instagram.com')) return null;
+    const parts = u.pathname.split('/').filter(Boolean);
+    if(parts.length === 0) return null;
+    const reserved = ['p','reel','reels','stories','explore','tv','direct'];
+    if(reserved.includes(parts[0].toLowerCase())) return null;
+    return parts[0];
+  }catch(e){ return null; }
+}
+
+linkEl.addEventListener('input', ()=>{
+  const val = linkEl.value.trim();
+  if(!val) return;
+  if(val.includes('shopee')){
+    setPlatform('shopee');
+  } else if(val.includes('instagram.com') || val.includes('ig.me')){
+    setPlatform('instagram');
+    const uname = extractIgUsername(val);
+    if(uname) igUserEl.value = uname;
+  }
+});
+
+document.getElementById('openShopee').addEventListener('click', ()=>{
+  const val = linkEl.value.trim();
+  if(!val){ showToast('Paste a Shopee link first'); return; }
+  window.open(val, '_blank');
+});
+
+async function composeAndSendIg(link, itemName){
+  const uname = igUserEl.value.trim().replace('@','');
+  const itemRef = itemName || (link ? 'the item at this link' : 'this item');
+  const message = `Hi! Is ${itemRef}${link ? ' (' + link + ')' : ''} still in stock, and how much is it?`;
+  try{
+    await navigator.clipboard.writeText(message);
+    showToast('Question copied — paste it in the chat and send');
+  }catch(e){
+    showToast('Could not copy, type the question yourself');
+  }
+  if(uname){
+    window.open(`https://ig.me/m/${uname}`, '_blank');
+  } else if(link){
+    window.open(link, '_blank');
+  } else {
+    showToast('Need a link or username to open the right chat');
+  }
+}
+document.getElementById('msgShop').addEventListener('click', ()=>{
+  composeAndSendIg(linkEl.value.trim(), document.getElementById('name').value.trim());
+});
+
+// ---- Backend calls (real server, replaces the old Claude-artifact storage API) ----
+async function fetchJson(url, options, attempts = 3){
+  let lastErr;
+  for(let i = 0; i < attempts; i++){
+    try{
+      const res = await fetch(url, options);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    }catch(e){
+      lastErr = e;
+    }
+    if(i < attempts - 1) await new Promise(r => setTimeout(r, 350 * (i + 1)));
+  }
+  throw lastErr;
+}
+
+// ---- Name gate ----
+async function startSession(){
+  const val = custNameEl.value.trim();
+  if(!val){ showToast('Enter your name first'); return; }
+  customerName = val;
+  customerSlug = slugify(val);
+  nameCard.classList.add('done');
+  orderArea.classList.remove('locked');
+  document.getElementById('cartTitle').textContent = val + '\u2019s cart';
+  await loadItems();
+  showToast('Hi ' + val + ', start adding items');
+}
+document.getElementById('setNameBtn').addEventListener('click', startSession);
+custNameEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') startSession(); });
+
+async function loadItems(){
+  try{
+    const data = await fetchJson('/api/cart/' + customerSlug);
+    items = data && Array.isArray(data.items) ? data.items : [];
+  }catch(e){
+    console.error('Load error', e);
+    items = [];
+    setSyncStatus('error');
+  }
+  render();
+}
+
+function setSyncStatus(state){
+  if(state === 'pending'){
+    syncStatusEl.classList.remove('error');
+    syncStatusEl.textContent = 'Saving...';
+  } else if(state === 'saved'){
+    syncStatusEl.classList.remove('error');
+    syncStatusEl.textContent = 'Saved';
+    clearTimeout(syncStatusEl._clearTimer);
+    syncStatusEl._clearTimer = setTimeout(()=>{ if(syncStatusEl.textContent === 'Saved') syncStatusEl.textContent = ''; }, 2000);
+  } else if(state === 'error'){
+    syncStatusEl.classList.add('error');
+    syncStatusEl.innerHTML = 'Not synced yet — your items are still here <a id="retrySync">Retry</a>';
+    const retry = document.getElementById('retrySync');
+    if(retry) retry.addEventListener('click', ()=> saveItems(true));
+  }
+}
+
+let saveTimer = null;
+let saveGeneration = 0;
+async function saveItems(immediate){
+  clearTimeout(saveTimer);
+  if(!immediate){
+    setSyncStatus('pending');
+    saveTimer = setTimeout(()=> doSave(), 500);
+    return;
+  }
+  await doSave();
+}
+async function doSave(){
+  const myGeneration = ++saveGeneration;
+  try{
+    await fetchJson('/api/cart/' + customerSlug, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: customerName, items })
+    }, 2);
+    if(myGeneration === saveGeneration) setSyncStatus('saved');
+  }catch(e){
+    console.error('Save error', e);
+    if(myGeneration === saveGeneration) setSyncStatus('error');
+  }
+}
+
+function fillFormFromItem(it){
+  setPlatform(it.platform);
+  linkEl.value = it.link || '';
+  igUserEl.value = '';
+  document.getElementById('name').value = it.name || '';
+  document.getElementById('price').value = it.price || '';
+  document.getElementById('qty').value = it.qty || 1;
+  document.getElementById('note').value = it.note || '';
+}
+function clearForm(){
+  document.getElementById('name').value = '';
+  linkEl.value = '';
+  document.getElementById('price').value = '';
+  document.getElementById('qty').value = '';
+  document.getElementById('note').value = '';
+  igUserEl.value = '';
+}
+function startEdit(i){
+  editIndex = i;
+  fillFormFromItem(items[i]);
+  editBanner.classList.add('show');
+  addBtn.textContent = 'Save changes';
+  window.scrollTo({ top: orderArea.offsetTop - 20, behavior: 'smooth' });
+}
+function stopEdit(){
+  editIndex = null;
+  editBanner.classList.remove('show');
+  addBtn.textContent = 'Add to cart';
+  clearForm();
+}
+document.getElementById('cancelEdit').addEventListener('click', stopEdit);
+
+function render(){
+  countEl.textContent = items.length + ' items';
+  if(items.length === 0){
+    listEl.innerHTML = '<div class="empty">Your cart is empty</div>';
+  } else {
+    listEl.innerHTML = items.map((it, i) => `
+      <div class="item">
+        <span class="badge ${it.platform}">${it.platform === 'shopee' ? 'Shopee' : 'IG'}</span>
+        <div class="item-body">
+          <div class="item-name">${escapeHtml(it.name || 'Untitled item')}</div>
+          ${it.link ? `<div class="item-meta">${escapeHtml(it.link)}</div>` : ''}
+          ${it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : ''}
+          <div class="item-row-actions">
+            <span data-i="${i}" data-action="edit">Edit</span>
+            <span data-i="${i}" data-action="duplicate">Duplicate</span>
+            ${it.platform === 'instagram' ? `<span data-i="${i}" data-action="msg">Ask shop</span>` : ''}
+          </div>
+        </div>
+        <div class="item-side">
+          <div class="item-price" data-i="${i}" data-action="edit-price">${it.qty > 1 ? it.qty + '× ' : ''}${formatVND(it.price)}</div>
+          <button class="remove" data-i="${i}" data-action="remove" title="Remove">×</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  const total = items.reduce((sum, it) => sum + (it.price * it.qty), 0);
+  totalEl.textContent = formatVND(total);
+
+  listEl.querySelectorAll('[data-action="remove"]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      items.splice(Number(btn.dataset.i), 1);
+      if(editIndex !== null) stopEdit();
+      render();
+      await saveItems();
+    });
+  });
+  listEl.querySelectorAll('[data-action="duplicate"]').forEach(el=>{
+    el.addEventListener('click', async ()=>{
+      const i = Number(el.dataset.i);
+      const copy = JSON.parse(JSON.stringify(items[i]));
+      items.splice(i + 1, 0, copy);
+      render();
+      await saveItems();
+      showToast('Duplicated — tap Edit to tweak size or color');
+    });
+  });
+  listEl.querySelectorAll('[data-action="edit"]').forEach(el=>{
+    el.addEventListener('click', ()=> startEdit(Number(el.dataset.i)));
+  });
+  listEl.querySelectorAll('[data-action="edit-price"]').forEach(el=>{
+    el.addEventListener('click', function handler(){
+      const i = Number(el.dataset.i);
+      const current = items[i].price;
+      el.innerHTML = `<input type="text" inputmode="numeric" value="${current}">`;
+      const input = el.querySelector('input');
+      input.focus();
+      input.select();
+      const commit = async ()=>{
+        const clean = input.value.replace(/\D/g,'');
+        items[i].price = clean ? parseInt(clean, 10) : 0;
+        render();
+        await saveItems();
+      };
+      input.addEventListener('blur', commit);
+      input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') input.blur(); });
+    });
+  });
+  listEl.querySelectorAll('[data-action="msg"]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const it = items[Number(el.dataset.i)];
+      composeAndSendIg(it.link, it.name);
+    });
+  });
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+addBtn.addEventListener('click', async ()=>{
+  const name = document.getElementById('name').value.trim();
+  const link = linkEl.value.trim();
+  const priceRaw = document.getElementById('price').value.replace(/\D/g,'');
+  const qtyRaw = document.getElementById('qty').value.replace(/\D/g,'');
+  const note = document.getElementById('note').value.trim();
+
+  if(!name && !link){
+    showToast('Enter an item name or link first');
+    return;
+  }
+
+  const itemData = {
+    platform, name, link,
+    price: priceRaw ? parseInt(priceRaw, 10) : 0,
+    qty: qtyRaw ? parseInt(qtyRaw, 10) : 1,
+    note
+  };
+
+  if(editIndex !== null){
+    items[editIndex] = itemData;
+    showToast('Item updated');
+  } else {
+    items.push(itemData);
+    showToast('Added to cart');
+  }
+  stopEdit();
+  render();
+  await saveItems();
+});
+
+document.getElementById('copyBtn').addEventListener('click', async ()=>{
+  if(items.length === 0){ showToast('Your cart is empty'); return; }
+  let text = `ORDER — ${customerName}\n\n`;
+  items.forEach((it, i)=>{
+    text += `${i+1}. [${it.platform === 'shopee' ? 'Shopee' : 'Instagram'}] ${it.name || '(untitled)'}\n`;
+    if(it.link) text += `   Link: ${it.link}\n`;
+    text += `   Qty: ${it.qty} × ${formatVND(it.price)}\n`;
+    if(it.note) text += `   Note: ${it.note}\n`;
+    text += '\n';
+  });
+  const total = items.reduce((sum, it) => sum + (it.price * it.qty), 0);
+  text += `Total: ${formatVND(total)}`;
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('Copied — send it over');
+  }catch(e){
+    showToast('Could not copy, select the text manually');
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', async ()=>{
+  if(items.length === 0) return;
+  const backup = JSON.parse(JSON.stringify(items));
+  items = [];
+  stopEdit();
+  render();
+  await saveItems();
+  showUndoToast('Cart cleared', async ()=>{
+    items = backup;
+    render();
+    await saveItems();
+  });
+});
+
+setPlatform('shopee');
+</script>
+</body>
+</html>

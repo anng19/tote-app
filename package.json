@@ -1,0 +1,15 @@
+{
+  "name": "tote",
+  "version": "1.0.0",
+  "description": "Quick order cart for Shopee and Instagram links, with a shared owner dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
